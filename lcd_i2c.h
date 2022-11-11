@@ -45,6 +45,8 @@ void lcd_print( char* c);
 void lcd_print_at( char* c, uint8_t row,uint8_t column);
 void lcd_set_display_address(uint8_t a);
 void lcd_init(  lcd_display_config *config );
+void lcd_backlight_set(uint8_t bl);
+
 
 #endif
 

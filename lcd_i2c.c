@@ -106,6 +106,12 @@ void lcd_print_char(char c)
 
 }
 
+
+void lcd_backlight_set(uint8_t bl)
+{
+   lcd_config.bits.backlight_on = bl==1?1:0;
+}
+
 void lcd_clear(void)
 {
    uint8_t backlight = (((uint8_t)lcd_config.bits.backlight_on)<<3);
