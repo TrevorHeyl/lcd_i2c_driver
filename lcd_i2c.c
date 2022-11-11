@@ -57,7 +57,7 @@ lcd_display_config lcd_config = { 	.max_columns=8,
 									.bits.backlight_on = 0,
 									.bits.cursor_blink_on = 0,
 									.bits.font_is_5x10 = 0,
-									.bits.interface_4_bit = 0
+									.bits.interface_8_bit = 0
 									 };
 
 
@@ -97,19 +97,23 @@ int _i2c_send_byte(uint8_t b, uint8_t device_addr)
  */
 void lcd_print_char(char c)
 {
-   _i2c_send_byte( ((c&0xf0) | (0b00001101)), lcd_config.device_addr ); 
-   _i2c_send_byte( ((c&0xf0) | (0b00001001)), lcd_config.device_addr ); 
-   _i2c_send_byte( (((c<<4)&0xf0) | (0b00001101)), lcd_config.device_addr); 
-   _i2c_send_byte( (((c<<4)&0xf0) | (0b00001001)), lcd_config.device_addr); 
+   uint8_t backlight = (((uint8_t)lcd_config.bits.backlight_on)<<3);
+
+   _i2c_send_byte( ((c&0xf0) | (0b00000101) ), lcd_config.device_addr ); 
+   _i2c_send_byte( ((c&0xf0) | (0b00000001) ), lcd_config.device_addr ); 
+   _i2c_send_byte( (((c<<4)&0xf0) | (0b00000101)  ), lcd_config.device_addr); 
+   _i2c_send_byte( (((c<<4)&0xf0) | (0b00000001) | backlight ), lcd_config.device_addr); 
 
 }
 
 void lcd_clear(void)
 {
-   _i2c_send_byte(0b00000100, lcd_config.device_addr); //
-   _i2c_send_byte(0b00000000, lcd_config.device_addr); // d7-d4=0
-   _i2c_send_byte(0b00010100, lcd_config.device_addr); //
-   _i2c_send_byte(0b00010000, lcd_config.device_addr); // d0=display clear
+   uint8_t backlight = (((uint8_t)lcd_config.bits.backlight_on)<<3);
+
+   _i2c_send_byte(0b00000100 | backlight, lcd_config.device_addr); //
+   _i2c_send_byte(0b00000000 | backlight, lcd_config.device_addr); // d7-d4=0
+   _i2c_send_byte(0b00010100 | backlight, lcd_config.device_addr); //
+   _i2c_send_byte(0b00010000 | backlight, lcd_config.device_addr); // d0=display clear
 
 }
 
@@ -130,10 +134,12 @@ void lcd_print( char* c)
  */
 void lcd_set_display_address(uint8_t a)
 {
-   _i2c_send_byte( (a&0x70)  | 0b10000100, lcd_config.device_addr); 
-   _i2c_send_byte( (a&0x70)  | 0b00000000, lcd_config.device_addr); 
-   _i2c_send_byte( ((a<<4)&0xf0) | 0b00000100, lcd_config.device_addr); 
-   _i2c_send_byte( ((a<<4)&0xf0) |0b00000000, lcd_config.device_addr); 
+   uint8_t backlight = (((uint8_t)lcd_config.bits.backlight_on)<<3);
+
+   _i2c_send_byte( (a&0x70)  | 0b10000100 | backlight, lcd_config.device_addr); 
+   _i2c_send_byte( (a&0x70)  | 0b00000000 | backlight, lcd_config.device_addr); 
+   _i2c_send_byte( ((a<<4)&0xf0) | 0b00000100 | backlight, lcd_config.device_addr); 
+   _i2c_send_byte( ((a<<4)&0xf0) |0b00000000 | backlight, lcd_config.device_addr); 
 }
 
 
@@ -166,11 +172,19 @@ void lcd_print_at( char* c, uint8_t row,uint8_t column)
  */
 void lcd_init(  lcd_display_config *cfg )
 {
+   
+   uint8_t backlight = (((uint8_t)cfg->bits.backlight_on)<<3);
 
    lcd_config.max_columns = cfg->max_columns;
    lcd_config.max_rows = cfg->max_rows;
    lcd_config.device_addr = cfg->device_addr;
    lcd_config.device = cfg->device;
+   lcd_config.bits.backlight_on = cfg->bits.backlight_on;
+   lcd_config.bits.auto_increment_cursor = cfg->bits.auto_increment_cursor;
+   lcd_config.bits.cursor_blink_on = cfg->bits.cursor_blink_on;
+   lcd_config.bits.cursor_on = cfg->bits.cursor_on;
+   lcd_config.bits.font_is_5x10 = cfg->bits.font_is_5x10;
+   lcd_config.bits.interface_8_bit = cfg->bits.interface_8_bit;
 
    lcd_i2c_us_sleep(15000);             // wait 15msec
    _i2c_send_byte(0b00110100, lcd_config.device_addr); // d7=0, d6=0, d5=1, d4=1, RS,RW=0 EN=1
@@ -228,7 +242,7 @@ void lcd_init(  lcd_display_config *cfg )
    _i2c_send_byte(0b00000100, lcd_config.device_addr); //
    _i2c_send_byte(0b00000000, lcd_config.device_addr); // D7-D4=0
    _i2c_send_byte( 0b11000100 | ((cfg->bits.cursor_on)<<5) | ((cfg->bits.cursor_blink_on)<<4) , lcd_config.device_addr); //
-   _i2c_send_byte( 0b11000000 | ((cfg->bits.cursor_on)<<5) | ((cfg->bits.cursor_blink_on)<<4) , lcd_config.device_addr); // D3=1 D2=display_on, D1=cursor_on, D0=cursor_blink	
+   _i2c_send_byte( 0b11001000 | ((cfg->bits.cursor_on)<<5) | ((cfg->bits.cursor_blink_on)<<4 | backlight  ) , lcd_config.device_addr); // D3=1 D2=display_on, D1=cursor_on, D0=cursor_blink	
 
    lcd_i2c_us_sleep(40);                // wait 40usec
 

@@ -30,7 +30,7 @@ typedef struct lcd_display_config
     {
         uint8_t cursor_on               : 1;
         uint8_t cursor_blink_on         : 1;
-        uint8_t interface_4_bit         : 1;
+        uint8_t interface_8_bit         : 1; //0=4bit, 1=8bit
         uint8_t backlight_on            : 1;
         uint8_t auto_increment_cursor   : 1;
         uint8_t font_is_5x10            : 1;
